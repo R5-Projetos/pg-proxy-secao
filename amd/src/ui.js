@@ -4,20 +4,36 @@ define(['jquery', 'core/ajax', 'core/notification', 'core/str'], function($, Aja
     var AIButton = {
         init: function(courseId) {
             this.courseId = courseId;
-            var triggerElement = $('.course-hero-img .d-flex.align-items-center'); // Hero section selector for RemUI
+            // Target the secondary navigation tabs (Moodle 4.0+ / RemUI)
+            var navTabs = $('.secondary-navigation .nav-tabs, .more-menu .nav-tabs');
 
-            if (triggerElement.length) {
-                this.renderButton(triggerElement);
+            if (navTabs.length) {
+                this.renderNavItem(navTabs);
             } else {
-                // Fallback for standard themes or if RemUI changes
-                // Try finding "Bulk Actions" button or "Turn editing on" region
-                var fallback = $('.header-actions-container, .page-header-headings');
-                if (fallback.length) this.renderButton(fallback);
-                else console.warn('[local_topico_ai_proxy] Could not find suitable location for AI Button');
+                // Fallback to original hero if tabs not found
+                var triggerElement = $('.course-hero-img .d-flex.align-items-center');
+                if (triggerElement.length) {
+                   this.renderButton(triggerElement);
+                } else {
+                   console.warn('[local_topico_ai_proxy] Could not find navigation tabs or hero section');
+                }
             }
         },
 
+        renderNavItem: function(container) {
+            var item = $('<li>').addClass('nav-item');
+            var link = $('<a>')
+                .addClass('nav-link ai-generation-link')
+                .attr('href', '#')
+                .html('✨ ' + M.str.local_topico_ai_proxy.generate_with_ai)
+                .on('click', this.handleClick.bind(this));
+            
+            item.append(link);
+            container.append(item);
+        },
+
         renderButton: function(container) {
+            // ... original button render for fallback ...
             var btn = $('<button>')
                 .addClass('btn btn-primary ml-2 ai-generation-btn')
                 .html('✨ <span class="d-none d-md-inline">' + M.str.local_topico_ai_proxy.generate_with_ai + '</span>')
@@ -29,14 +45,14 @@ define(['jquery', 'core/ajax', 'core/notification', 'core/str'], function($, Aja
 
         handleClick: function(e) {
             e.preventDefault();
-            var btn = $(e.currentTarget);
+            var target = $(e.currentTarget);
             
             // Confirm dialog
             if (!confirm('Deseja realmente gerar a estrutura do curso com IA? Isso pode alterar tópicos existentes.')) {
                 return;
             }
 
-            this.setLoading(btn, true);
+            this.setLoading(target, true);
 
             Ajax.call([{
                 methodname: 'local_topico_ai_proxy_generate_program',
@@ -49,15 +65,24 @@ define(['jquery', 'core/ajax', 'core/notification', 'core/str'], function($, Aja
             })
             .fail(Notification.exception)
             .always(function() {
-                AIButton.setLoading(btn, false);
+                AIButton.setLoading(target, false);
             });
         },
 
-        setLoading: function(btn, isLoading) {
+        setLoading: function(target, isLoading) {
             if (isLoading) {
-                btn.prop('disabled', true).html('<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> ' + M.str.local_topico_ai_proxy.generating);
+                 // Check if it's a link or button
+                 if (target.is('a')) {
+                     target.addClass('disabled').html('<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> ' + M.str.local_topico_ai_proxy.generating);
+                 } else {
+                     target.prop('disabled', true).html('<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> ' + M.str.local_topico_ai_proxy.generating);
+                 }
             } else {
-                btn.prop('disabled', false).html('✨ <span class="d-none d-md-inline">' + M.str.local_topico_ai_proxy.generate_with_ai + '</span>');
+                 if (target.is('a')) {
+                     target.removeClass('disabled').html('✨ ' + M.str.local_topico_ai_proxy.generate_with_ai);
+                 } else {
+                     target.prop('disabled', false).html('✨ <span class="d-none d-md-inline">' + M.str.local_topico_ai_proxy.generate_with_ai + '</span>');
+                 }
             }
         }
     };

@@ -70,7 +70,7 @@ class generate_program extends external_api {
 
         // Generate new token via internal API
         // This simulates login/token.php but internally
-        $token = \external_generate_token(INTERNAL_TOKEN_GENERATION_PASS, $service->id, $userid, context_system::instance(), 0, 0);
+        $token = \external_generate_token(EXTERNAL_TOKEN_PERMANENT, $service->id, $userid, context_system::instance(), 0, 0);
         return $token;
     }
 

@@ -6,6 +6,7 @@ use external_function_parameters;
 use external_single_structure;
 use external_value;
 use context_course;
+use context_system;
 use core_user;
 
 defined('MOODLE_INTERNAL') || die();
